@@ -27,3 +27,6 @@ print_output.o:
 
 pre.o:
 	gcc -c -ansi -Wall -pedantic pre.c -o pre.o -lm
+
+clean:
+	rm -f *.o assembler
