@@ -49,10 +49,11 @@ void assemble(char *argv)
 
     ic  = 100; /* first 100 places saved for the machine */
     dc  = 0;         
-    as_filename = (char *)malloc(strlen(argv) + 3); /* +3 for file extention */
-    error_flag = (int *)malloc(1);
-    strcat((char *)(as_filename = strdup(argv)), ".as");
-    
+    as_filename = (char *)malloc(strlen(argv) + 4); /* +4 for file extention and null terminator*/
+    error_flag = (int *)malloc(sizeof(int));
+    strcpy(as_filename, argv);
+    strcat(as_filename, ".as");
+
     expand_macros(as_filename, &(am_file));
     
     as_filename[strlen(as_filename) - 1] = 'm';/*now has ".am" at string's end*/

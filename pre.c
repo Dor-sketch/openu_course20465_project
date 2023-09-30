@@ -94,12 +94,12 @@ Macro_slot *install_macro(char *name, char *lines)
 /* copy_macro_lines: copy the lines between the macro name and "endm"*/
 char *copy_macro_lines(FILE **read)
 {
-    char line[MAXLINE];
+    char line[MAXLINE] = {0};  /* initialize to all zeros*/
     char *all_line;
-    char c;
     int i;
+    char c = ' ';
 
-    all_line = (char *)malloc(100*sizeof(line));/* assumed maximum macro size */
+    all_line = (char *)malloc(100*sizeof(line));  /* assumed maximum macro size */
     *all_line = '\0';
     while (strstr(line, "endm") == NULL) {
         for (i = 0; i < MAXLINE; i++) {
@@ -168,8 +168,8 @@ void copy_two_fields(char *first_field, char *second_field, char *curline)
 void expand_macros(char *file_name, FILE **read)
 {
     FILE *write;
-    char c;
-    char curline[MAXLINE]; /* I assumed the max macro size*/
+    char c = ' ';
+    char curline[MAXLINE] = {0}; /* I assumed the max macro size*/
     int i;
     char *first_field;
     char *second_field;
