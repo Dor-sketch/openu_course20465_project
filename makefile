@@ -29,4 +29,4 @@ pre.o:
 	gcc -g -c -ansi -Wall -pedantic pre.c -o pre.o -lm
 
 clean:
-	rm -f *.o assembler
+	rm -f *.o assembler *.ob *.ent *.ext *.am
