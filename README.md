@@ -23,16 +23,19 @@ The assembler consists of the following modules:
 To use the assembler, you will need to provide it with an input file containing assembly code. The assembler will output several files, including a machine code file, an external data words file, and an entry type symbols file.
 
 ```bash
-$ ./assembler input.asm
+$ ./assembler {input - without .as extension}
 ```
 
 ## Contributing
 
 If you would like to contribute to the project, you can fork the repository and submit a pull request with your changes. Please make sure that your changes are well-tested and adhere to the project's coding standards.
 
+## Acknowledgments
+
+This project was done as part of a school assignment at The Open University of Israel.
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
+This project is licensed under the MIT License.
 
 
