@@ -1,0 +1,23 @@
+# Object files
+*.o
+
+# Executables
+prog
+
+# Compiled libraries
+*.so
+
+# IDE files
+.vscode/
+.idea/
+
+# Build output
+build/
+bin/
+assembler
+
+# prog output
+*.ent
+*.ext
+*.ob
+*.am

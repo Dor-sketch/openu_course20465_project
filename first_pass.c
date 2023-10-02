@@ -16,6 +16,7 @@ int convert_declaration(src_op_line *srcline, machine_word **code_img)
     char first_op[MAXLABEL]; /* same for the first operand */
     char second_op[MAXLABEL]; /* same for the second operand */
     int address; /* the memory address - word's position inside the code image*/
+    char line_size_cmd[MAXLINE] = {0}; /* full line size - to prevent bufferoverflow in get_op() */
 
     address = srcline->cur_ic;
    
@@ -27,7 +28,8 @@ int convert_declaration(src_op_line *srcline, machine_word **code_img)
 
     get_ops_fields(srcline, first_op, second_op, cmd);
     /* now set "op-code" field in the first machine word */
-    code_img[address]->funct_nd_ops = opcodes[get_opcode(cmd)].op_code;
+    strcpy(line_size_cmd, cmd); /* copy the command to a temporary string */
+    code_img[address]->funct_nd_ops = opcodes[get_opcode(line_size_cmd)].op_code;
     code_img[address]->AER_field = ABSOLUTE; /* turn 'A' field on by default */
     address++;
 
@@ -58,7 +60,7 @@ int get_first_img(int ic, int dc, machine_word **code_img,
 				  int *error_flag)
 {
     src_op_line *srcline; /* the source line */
-    int pos; /* line's position indicator */
+    int pos = 0; /* line's position indicator */
     
     if ((srcline = new_linebuff(as_filename, ic, dc)) == NULL) { 
         printf("%s:1: error: memmory failure.\n", srcline->as_filename);
