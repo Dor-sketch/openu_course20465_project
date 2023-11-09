@@ -2,7 +2,15 @@
 
 ## 📌 Overview
 
-This is an assembler for a custom assembly language that translates assembly code into machine code. The assembler consists of several modules that work together to produce machine code files from assembly language files.
+This endeavor involved crafting an assembler tailored for a specialized assembly language. The primary objective was to transform assembly instructions, which are readable by humans, into binary machine code executable by computers. This tool serves as a pivotal resource for comprehending the connection between abstract programming concepts and their concrete low-level machine code executions.
+
+The project is implemented in `ANSI C`, demonstrating a strong grasp of foundational programming principles. It was completed as part of the curriculum for the `20465 System Programming Laboratory` course at _The Open University of Israel_, where it achieved a grade of `98`.
+
+
+---
+
+![image](https://github.com/Dor-sketch/openu_course20465_project/assets/138825033/2b722882-b363-491c-9e1f-db706b2da88a)
+
 
 ## 🧩 Modules
 
@@ -26,10 +34,6 @@ $ ./assembler {input - without .as extension}
 ## 👥 Contributing
 
 If you would like to contribute to the project, you can fork the repository and submit a pull request with your changes. Please make sure that your changes are well-tested and adhere to the project's coding standards.
-
-## 🙏 Acknowledgments
-
-This project was done as part of a school assignment at The Open University of Israel.
 
 ## 📜 License
 
