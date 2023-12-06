@@ -21,3 +21,5 @@ assembler
 *.ext
 *.ob
 *.am
+
+.clang-format
