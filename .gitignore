@@ -23,3 +23,5 @@ assembler
 *.am
 
 .clang-format
+
+.DS_Store

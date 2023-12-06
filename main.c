@@ -4,20 +4,22 @@
 #include "print_output.h"
 #include "second_pass.h"
 
-#define MAX_CODE_ARR 600 /* Maximum array size for code and data images */
+#define MAX_CODE_ARR 600 /* maximum array size for code and data images */
 
 extern char *strdup(const char *);
 
-/* Frees memory allocated for machine words in an image array */
+/* free_machine_img: frees the memory allocated for the machine image */
 void free_machine_img(machine_word **img, int start, int counter) {
-    for (int i = start; i < counter && img[i] != NULL; i++) {
+    int i = start;
+
+    for (; i < counter && img[i] != NULL; i++) {
         if (img[i] != NULL) {
             free(img[i]);
         }
     }
 }
 
-/* Frees various resources allocated during the assembly process */
+/* free_resources: frees all resources allocated during assembly */
 void free_resources(char *as_filename, int *error_flag, machine_word **code_img,
                     machine_word **data_img, int ic, int dc) {
     if (as_filename != NULL) {
@@ -31,7 +33,7 @@ void free_resources(char *as_filename, int *error_flag, machine_word **code_img,
     }
 }
 
-/* Updates and returns a new filename with '.as' extension */
+/* update_input_filename: updates the input filename to end with ".as" */
 char *update_input_filename(char *filename) {
     char *new_filename = malloc(strlen(filename) + 4);
     if (new_filename == NULL) {
@@ -42,16 +44,7 @@ char *update_input_filename(char *filename) {
     return new_filename;
 }
 
-/* Handles the first pass of assembly process */
-int generate_first_pass(char *as_filename, FILE **ex_src_fl, int *error_flag,
-                        int *ic, int *dc, machine_word **code_img, machine_word **data_img) {
-    as_filename[strlen(as_filename) - 1] = 'm'; /* Change to ".am" */
-    printf("Running first pass with ic = %d, dc = %d\n", *ic, *dc);
-    int updated_dc = get_first_img(*ic, *dc, code_img, data_img, *ex_src_fl, as_filename, error_flag);
-    return updated_dc;
-}
-
-/* Checks and reports if an error occurred during assembly */
+/* check_error_flag: checks if an error was found during assembly */
 int check_error_flag(int *error_flag) {
     if (*error_flag == EXIT_FAILURE) {
         printf("Error: File has errors, no output files created.\n");
@@ -60,7 +53,7 @@ int check_error_flag(int *error_flag) {
     return EXIT_SUCCESS;
 }
 
-/* Processes a single assembly file */
+/* process_assembly_file: processes the assembly file */
 void process_assembly_file(char *as_filename, int *ic, int *dc,
                            machine_word **code_img, machine_word **data_img,
                            int *error_flag) {
@@ -78,25 +71,23 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
         return;
     }
 
-    fseek(am_file, 0, SEEK_SET); // Reset for second pass
+    fseek(am_file, 0, SEEK_SET);  /* reset for second pass */
     *ic = get_second_img(code_img, data_img, am_file, as_filename, error_flag);
     fclose(am_file);
 }
 
-/* Handles the assembly process */
+/* assemble: assembles the given file and creates the output files */
 void assemble(char *argv) {
     machine_word *code_img[MAX_CODE_ARR] = {0};
     machine_word *data_img[MAX_CODE_ARR] = {0};
-    int ic = 100, dc = 0;
+    int ic = 100, dc = 0, error_flag = EXIT_SUCCESS;
     char *as_filename = update_input_filename(argv);
-
 
     if (!as_filename) {
         fprintf(stderr, "Error: Failed to update input filename.\n");
         return;
     }
 
-    int error_flag = EXIT_SUCCESS;
     process_assembly_file(as_filename, &ic, &dc, code_img, data_img, &error_flag);
 
     if (check_error_flag(&error_flag) == EXIT_SUCCESS) {
@@ -107,14 +98,16 @@ void assemble(char *argv) {
     printf("Finished assembling %s\n", argv);
 }
 
-/* Main function: processes each file passed as a command-line argument */
+/* main: main function gets the input files and calls the assembler */
 int main(int argc, char *argv[]) {
+    int i = 0;
+
     if (argc <= 1) {
         printf("Error: Program needs at least one file to assemble.\n");
         return EXIT_FAILURE;
     }
 
-    for (int i = 1; i < argc; i++) {
+    for (i = 1; i < argc; i++) {
         assemble(argv[i]);
     }
 

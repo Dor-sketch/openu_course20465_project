@@ -1,92 +1,90 @@
-#include "syntax.h"
 #include "symbol_table.h"
+#include "syntax.h"
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define LABEL (srcline->label)
-#define LABEL_LENGTH (strlen(LABEL))
+typedef enum data_type { DATA,
+                         STRING,
+                         ENTRY,
+                         EXTERN,
+                         INVALID_DATA } data_type;
 
-typedef enum data_type { DATA, STRING, ENTRY, EXTERN, INVALID_DATA } data_type;
+/* max: returns the maximum value between two integers */
+int max(int a, int b) {
+    return a > b ? a : b;
+}
 
-void install_numbers(src_op_line *srcline, machine_word **data_img);
-void install_extern(src_op_line *srcline, machine_word **data_img);
-void install_string(src_op_line *srcline, machine_word **data_img);
-void install_entry(src_op_line *srcline, machine_word **data_img);
+/* get_label: returns the label of the source line */
+char *get_label(src_op_line *srcline) {
+    return srcline->label;
+}
 
-/* a structure used to find data instruction and activiate their machine
-   installiation function. It's used by the following function "get_datatype"
-   to compare a given string to the valid data instructions names. */
-static struct {
-    char *name;
-    void (*func)(src_op_line *src_line_ptr, machine_word **data_img);
-    data_type type;
-} data[] = {
-    { ".data",   install_numbers,    DATA },
-    { ".string", install_string,     STRING },
-    { ".entry",  install_entry,      ENTRY },
-    { ".extern", install_extern,     EXTERN },
-    { ".error",  NULL,               INVALID_DATA }
-};
+/* get_label_length: returns the length of the label */
+size_t get_label_length(src_op_line *srcline) {
+    return strlen(srcline->label);
+}
 
-/* copy_datatype: copy a string (array of characters) from special sign "." 
-   until reaching token (space, new line etc.), returns a pointer to string 
-   address*/
-char *copy_datatype(char *aligned_instruction)
-{
-    char *temp_string;
-    int i;
-    
-    temp_string = (char*) malloc(strlen(".extern") + 1); 
-    /* size of ".extern" = size of ".string" > size of ".data" and ".entry" */
+/* copy_datatype: returns the data type as a string */
+char *copy_datatype(const char *aligned_instruction) {
+    size_t start = 0, end= 0;
+    char *temp_string = NULL;
 
-    for (i = 0; i<=strlen(temp_string) && aligned_instruction[i] != ' ' 
-        	&& aligned_instruction[i] != '\0' 
-        	&& aligned_instruction[i] != '\n' ; i++) {
-        	
-        	temp_string[i] = aligned_instruction[i];
+    start = strcspn(aligned_instruction, ".");
+    if (start == strlen(aligned_instruction)) {
+        return NULL;
     }
-    temp_string[i] = '\0';
+
+    end = start + strcspn(aligned_instruction + start, " \n");
+
+    temp_string = (char *)malloc(end - start + 1);
+    if (!temp_string) {
+        perror("Memory allocation failed for datatype string");
+        return NULL;
+    }
+
+    strncpy(temp_string, aligned_instruction + start, end - start);
+    temp_string[end - start] = '\0';
+
     return temp_string;
 }
 
-/* get_datatype: get a string and identify if its a valid data instruction
-   aka .data .string .extern .entry. returns the "data_type" definiation
-   of the input by searching for its name throgh the diffrent alternatives. */
-data_type get_datatype(char *aligned_instruction)
-{  
-    char *temp_string;
+/* get_datatype: returns the data type of the source line */
+data_type get_datatype(const char *aligned_instruction) {
     int i;
-    int total_options;
+    data_type type = INVALID_DATA;
+    const char *data_instructions[] = {".data", ".string", ".entry", ".extern", ".error"};
+    char *temp_string = copy_datatype(aligned_instruction);
+    if (!temp_string) {
+        return INVALID_DATA;
+    }
 
-    temp_string = copy_datatype(aligned_instruction);
-    total_options = (sizeof(data)/sizeof(data[0])) - 1; 
-    		    /* for the multi structure of data[] */
-
-    for (i = 0; i < total_options; i++) { 
-        if (strcmp(temp_string, data[i].name) == 0)
+    for (i = 0; i < sizeof(data_instructions) / sizeof(data_instructions[0]); i++) {
+        if (strcmp(temp_string, data_instructions[i]) == 0) {
+            type = (data_type)i;
             break;
+        }
     }
     free(temp_string);
-    return data[i].type;
+    return type;
 }
 
-/* install_entry: the function only prints warnning. entries are handled 
+/* install_entry: the function only prints warnning. entries are handled
 	separatly from the second pass file */
 void install_entry(src_op_line *srcline, machine_word **data_img)
 {
     if (strlen(srcline->label) > 0)
         printf("%s:%d: warrning: label '%s' before an enrty\n",
-        	srcline->as_filename, srcline->line_num, srcline->label);                   
+        	srcline->as_filename, srcline->line_num, srcline->label);
 }
 
-/* install_string: the function creates a binay-word for every character
-   using the "machine word" structer describes in the syntax header, and
-   saves it in the data image. The binary word is made froe the ASCII value
-   of the character. An ending character '\0' is also created and saved at
-   the data image array after reading the last character of the string. */ 
+/* install_string: creates a binary-word representation for every character
+   in the string after the special word ".string". The function also updates
+   the sign of the number and handles errors regarding invalid numbers. */
 void install_string(src_op_line *srcline, machine_word **data_img)
 {
     int ending, start;
-    
+
     ending = 0; /* a variable to represent the end of a string (closin "") */
     start = 0; /* same for the beginning of the string */
 
@@ -96,14 +94,14 @@ void install_string(src_op_line *srcline, machine_word **data_img)
             srcline->as_filename, srcline->line_num, srcline->cur_dc);
         return;
     }
-    
+
     start = strlen("  .string \"");
     ending = strlen(srcline->alignedsrc) - 2; /* -1 for '\"' and -2 for '\n' */
-    
+
     if (strlen(srcline->label) > 0) { /* true if ther's a label to install */
-        if (install(LABEL, srcline->cur_dc+1, ".data", srcline) == NULL) { 
-            printf("error: symbol is aleady defined\n");                
-        }    
+        if (install(get_label(srcline), srcline->cur_dc + 1, ".data", srcline) == NULL) {
+            printf("error: symbol is aleady defined\n");
+        }
         start += strlen(srcline->label);
     }
 
@@ -113,30 +111,27 @@ void install_string(src_op_line *srcline, machine_word **data_img)
             &srcline->alignedsrc[start]); /* print only the string content */
         srcline->error_flag = EXIT_FAILURE;
     }
-    
+
     for (; start < ending; start++) {
         data_img[srcline->cur_dc]->funct_nd_ops = (int)srcline->alignedsrc[start];
         srcline->cur_dc++;
-        
-        if ((data_img[srcline->cur_dc] = 
+
+        if ((data_img[srcline->cur_dc] =
         	(machine_word*) malloc(sizeof(machine_word))) == NULL) {
             printf("%s:%d: error: data image assress '%d' unavailable\n",
                 srcline->as_filename, srcline->line_num, srcline->cur_dc);
             return;
         } /* allocate memory to the data image for the next character */
     } /* end of string to install */
-    
+
     data_img[srcline->cur_dc]->funct_nd_ops = (int) '\0';
     srcline->cur_dc++;
     return;
 }
 
-/* install_numbers: the function creates a binary-word representation for every
-   number after the special word ".data". It converts every number from a string
-   to an integer, by reading it digit by digit, and multiplies by 10 evey time.
-   each number's saved as a binary-word in the data image after a comma,
-   or at the end of the line. The function also updates the sign of the number
-   and handles errors regarding invalid numbers. */ 
+/* install_numbers: creates a binary-word representation for every number
+   after the special word ".data". The function also updates the sign of the
+   number and handles errors regarding invalid numbers. */
 void install_numbers(src_op_line *srcline, machine_word **data_img)
 {
     int pos = strlen(".data "); /* set position on the first operand */
@@ -144,72 +139,73 @@ void install_numbers(src_op_line *srcline, machine_word **data_img)
     int is_negative = 1;
     int temp_num = 0;
     int was_number = 0; /* flags to deal with the last number */
-    int after_comma = 0;    
-    int has_changed = srcline->cur_dc;       
-	
+    int after_comma = 0;
+    int has_changed = srcline->cur_dc;
+    size_t label_length = get_label_length(srcline);
+
     if ((data_img[srcline->cur_dc] = (machine_word *)malloc(sizeof(machine_word)))
     		== NULL) { /* malloc failure */
         printf("%s:%d: error: data image assress '%d' unavailable\n",
             srcline->as_filename, srcline->line_num, srcline->cur_dc);
         return;
     }
-	
+
     if (strlen(srcline->label) > 0) { /* if ther's a label before the data */
-        if (install(LABEL, srcline->cur_dc+1, ".data", srcline) == NULL) {
-            printf("error: symbol aleady defined...\n");               
+        if (install(get_label(srcline), srcline->cur_dc + 1, ".data", srcline) == NULL) {
+            printf("error: symbol aleady defined...\n");
         }
-        pos += LABEL_LENGTH + 2; /* +1 for ':', +2 for anather space */
+        pos += label_length + 2; /* +1 for ':', +2 for anather space */
     }
-	
+
     for (; pos < strlen(srcline->alignedsrc); pos++) { /* until end of line */
 
-        if (inside_number == 0) { /* update the sign at the begining */          
-            if (srcline->alignedsrc[pos] == '+' || 
-            	srcline->alignedsrc[pos] == '-') {               
+        if (inside_number == 0) { /* update the sign at the begining */
+            if (srcline->alignedsrc[pos] == '+' ||
+            	srcline->alignedsrc[pos] == '-') {
                 if ('-' == (char)srcline->alignedsrc[pos])
-                    is_negative = -1;                 
+                    is_negative = -1;
                 pos++;
         	}
         }
         inside_number = 1;
-        
+
         if (!isdigit(srcline->alignedsrc[pos])) {
             if (srcline->alignedsrc[pos] == ',' ||
             	srcline->alignedsrc[pos] == '\n' ||
             	srcline->alignedsrc[pos] == ' ') { /* if valid number ending */
-                
+
                 if ((after_comma == 1) && (was_number == 0)) {/*missing number*/
                 	printf("%s:%d: error: missing a number after ','\n",
             			srcline->as_filename, srcline->line_num);
                     srcline->error_flag = EXIT_FAILURE;
-                    return;  
+                    return;
                 }
-                
+
                 data_img[srcline->cur_dc]->funct_nd_ops = temp_num*is_negative;
                 srcline->cur_dc++; /*done intall data, now update data counter*/
-                
+
                 if ((data_img[srcline->cur_dc]
                 	= (machine_word *)malloc(sizeof(machine_word))) == NULL) {
         	    	printf("%s:%d: error: data image assress '%d' unavailable\n",
             			srcline->as_filename, srcline->line_num, srcline->cur_dc);
-                    return;      
+                    return;
                 } /* allocated space now get ready for next number */
-                
-                while ((srcline->alignedsrc[pos] != ',') && 
+
+                while ((srcline->alignedsrc[pos] != ',') &&
                 		(pos < strlen(srcline->alignedsrc))) /* before '\n' */
                 			pos ++;
-                
+
                 after_comma = (srcline->alignedsrc[pos] == ',') ? 1 : 0;
-                
+
                 if (srcline->alignedsrc[pos] == ' ')
                 	pos++;
-                
+
                 inside_number = 0;
                 was_number = 0;
                 temp_num = 0;
                 is_negative = 1;
-                
-            } else { /* if reads an invald character (nor a digit or a comma) */    
+
+            } else { /* if reads an invald character (nor a digit or a comma) */
                 printf("%s:%d: error: invalid digit '%c'\n",
                     srcline->as_filename, srcline->line_num,
                     srcline->alignedsrc[pos]);
@@ -238,49 +234,58 @@ void install_extern(src_op_line * srcline, machine_word **data_img)
 
     if (strlen(srcline->label) > 0) { /* a label before an external data */
         printf("%s:%d: warrning: label '%s' before an external declaration\n",
-        	srcline->as_filename, srcline->line_num, srcline->label);                   
+        	srcline->as_filename, srcline->line_num, srcline->label);
     }
 
-    for (i = strlen(".extern "); srcline->alignedsrc[i] != '\0'; i++) { 
+    for (i = strlen(".extern "); srcline->alignedsrc[i] != '\0'; i++) {
     	/* copy the symbol after ".extern" */
         srcline->label[i - strlen(".extern ")] = srcline->alignedsrc[i];
     }
     srcline->label[i - strlen(".extern ")-1] = '\0';
-    
+
     if (install(srcline->label, 0, ".extern", srcline) == NULL) {
-        printf("exit from external symbol statmetn\n");
+        printf("exit from external symbol statment\n");
     }
 }
 
-/* proccess_data: install the given input from the source line into the data
-	image as binary words. If it finds a relavant label also saves it in the
-	Symbols-Table. The function also handles locally data-regarding input errors
-	(undefind use of speciel "." symbol / missing string or numburs etc.) and
-	update the error flag saved inside the source line structure accordingly. */
-void process_data(src_op_line *srcline, machine_word **data_img)
-{
-    data_type type;
-    int data_pos;
+/* handle_unknown_data: prints an error message for an unknown data instruction */
+void handle_unknown_data(src_op_line *srcline) {
+    /* Find the start of the instruction (after the '.') */
+    const char *start = strchr(srcline->alignedsrc, '.') + 1;
 
-    data_pos = strlen(srcline->label) == 0 ? 0 : strlen(srcline->label) + 2;
-    
-    if ((type = get_datatype(&srcline->alignedsrc[data_pos])) == INVALID_DATA) {
-        printf("%s:%d: error: undefined data instruction '",
-        	srcline->as_filename, srcline->line_num);
-        	/* if nor ".data" ".string" ".extern" ".entry" */
-        while (!isspace(srcline->alignedsrc[data_pos])) { 
-            putchar(srcline->alignedsrc[data_pos]);
-            data_pos++;
-        }/* prints the instruction */
-        
-        printf("'\n");
-        
-        if (strlen(srcline->label) != 0) { /* if ther's a label before "." */
-            printf("%s:%d: note: symbol '%s' won't be installed due to an undefined statement\n",
-                srcline->as_filename, srcline->line_num, srcline->label);
-        }
-        srcline->error_flag = EXIT_FAILURE;
+    /* If no '.' found, or it's the last character, print a default error message */
+    if (!start || *start == '\0') {
+        fprintf(stderr, "%s:%d: error: undefined data instruction\n",
+                srcline->as_filename, srcline->line_num);
     } else {
-        (*(data[type].func))(srcline, data_img);
+        size_t len = strcspn(start, " \t\n");
+
+        fprintf(stderr, "%s:%d: error: undefined data instruction: '.%.*s'\n",
+                srcline->as_filename, srcline->line_num, (int)len, start);
+    }
+    srcline->error_flag = EXIT_FAILURE;
+}
+
+/* process_data: identifies the data type of the source line
+   and calls the appropriate function to handle it. */
+void process_data(src_op_line *srcline, machine_word **data_img) {
+    data_type type = get_datatype(srcline->alignedsrc);
+
+    switch (type) {
+    case DATA:
+        install_numbers(srcline, data_img);
+        break;
+    case STRING:
+        install_string(srcline, data_img);
+        break;
+    case ENTRY:
+        install_entry(srcline, data_img);
+        break;
+    case EXTERN:
+        install_extern(srcline, data_img);
+        break;
+    case INVALID_DATA:
+        handle_unknown_data(srcline);
+        break;
     }
 }

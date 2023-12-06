@@ -1,17 +1,21 @@
 #if !defined(syntax)
 #define syntax
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define MAXLINE    80
-#define MAXLABEL   31
-#define ABSOLUTE    4
-#define RELOCA      2
-#define EXTR        1
+#define MAXLINE 80
+#define MAXLABEL 31
+#define ABSOLUTE 4
+#define RELOCA 2
+#define EXTR 1
 
-typedef enum addressing { IMMEDIATE, DIRECT, INDEX, REG_DIRECT, NO_AD = 0 } addressing;
+typedef enum addressing { IMMEDIATE,
+                          DIRECT,
+                          INDEX,
+                          REG_DIRECT,
+                          NO_AD = 0 } addressing;
 
 /* a Bit-fields structure for binary code representation of a word */
 typedef struct machine_word {
