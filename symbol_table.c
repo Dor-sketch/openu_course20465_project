@@ -8,7 +8,7 @@
 extern char *strdup(const char*);
 
 /* the symbol-table impleted by hash-table */
-static Symtab_slot *hashtab[HASHSIZE]; 
+static Symtab_slot *hashtab[HASHSIZE];
 
 /* hash: form hash value for string s */
 unsigned hash(char *s)
@@ -25,12 +25,11 @@ void free_symbols(void)
 {
     Symtab_slot * ptr;
     int i;
-    
-    for (i = 0; i< HASHSIZE; i++) {    
+
+    for (i = 0; i< HASHSIZE; i++) {
         while (hashtab[i] != NULL) {
             ptr = hashtab[i]->next;
             free(hashtab[i]->name);
-            memset(&hashtab[i], 0, sizeof(Symtab_slot));
             free(hashtab[i]);
             hashtab[i] = ptr;
         }
@@ -50,7 +49,7 @@ Symtab_slot *lookup(char *label)
     return NULL; /* incase not found */
 }
 
-static char *saved_words[] = { 
+static char *saved_words[] = {
 	".string", ".data", ".entry", ".external",
 	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
 	"r12", "r13", "r14", "r15",
@@ -58,7 +57,7 @@ static char *saved_words[] = {
 	"jsr", "red", "prn", "rts", "stop"
 };
 
-/* install: gets a symbol name and details and saves them into a "symbol slot" 
+/* install: gets a symbol name and details and saves them into a "symbol slot"
 	in symbols hash table. returns a pointer to the "symbol-slot" if succeded,
 	or NULL if failed */
 Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
@@ -75,10 +74,10 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
             srcline->error_flag = EXIT_FAILURE;
             return NULL;
           }
-	}    	 
-    
+	}
+
     if ((np = lookup(name)) == NULL) { /* not found */
-        np = (Symtab_slot *) malloc(sizeof(*np));
+        np = calloc(1, sizeof(Symtab_slot));
         if (np == NULL || (np->name = strdup(name)) == NULL) {
             printf("%s%d: error: failed duplicating symbol %s\n",
             	srcline->as_filename, srcline->line_num, name);
@@ -107,7 +106,7 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
             np->is_entry = 1;
             return np;
         } else {
-            printf("%s%d: error: redefinition of saved symbol %s\n", 
+            printf("%s%d: error: redefinition of saved symbol %s\n",
                 srcline->as_filename, srcline->line_num, name);
             printf("artbt is %s and in enrty = %d\n\n", artbt, np->is_entry);
             srcline->error_flag = EXIT_FAILURE;
@@ -140,15 +139,15 @@ void update_symbols(int icf)
 {
     Symtab_slot *ptr;
     int i;
-    
+
     i = 0;
-        
+
     for (i = 0; i< HASHSIZE; i++) {
         ptr = hashtab[i];
         while (ptr != NULL) {
 
             if (ptr->is_data == 1) { /* true if symbol has "data" attribute */
-                ptr->value = ptr->value + icf; 
+                ptr->value = ptr->value + icf;
             }
             ptr->base = get_base(ptr->value);
             ptr->offset = ptr->value - ptr->base;
@@ -157,7 +156,7 @@ void update_symbols(int icf)
     }
 }
 
-/* print_table: a function to print the symbol table on the commad line 
+/* print_table: a function to print the symbol table on the commad line
 	(for debuuging - not used by the assembler) */
 void print_table(void)
 {
@@ -165,9 +164,9 @@ void print_table(void)
     int i, j;
     i = 0;
     j = 0;
-        
+
     for (i = 0; i< HASHSIZE; i++) {
-        
+
         ptr = hashtab[i];
 
         while (ptr != NULL) {
@@ -200,7 +199,7 @@ void print_table(void)
 }
 
 /* print_ent_nd_ext: a function to search for symbols with "entry" or "external"
-	attribures in the symbols-table, and to print enties on a new ".ent" file 
+	attribures in the symbols-table, and to print enties on a new ".ent" file
 	and	externals on a new ".ext" file, both starts whith the given file name.*/
 void print_ent_nd_ext(char *ent_file_name)
 {
@@ -211,7 +210,7 @@ void print_ent_nd_ext(char *ent_file_name)
     int i;
     int wrote_ent;
     int wrote_ext;
-    
+
     wrote_ent = 0;
     wrote_ext = 0;
 
@@ -224,17 +223,17 @@ void print_ent_nd_ext(char *ent_file_name)
     ext = fopen(ext_file_name, "w");
 
     for (i = 0; i< HASHSIZE; i++) {
-        
+
         ptr = hashtab[i];
-        
+
         while (ptr != NULL) {
-            
+
             if (ptr->is_entry == 1) {/* true if symbol has an entry attribute */
                 fprintf(ent,"%s,%04d,%04d\n",
                 	ptr->name, ptr->base, ptr->offset);
                 wrote_ent = 1;
             }
-            
+
             if (ptr->is_external == 1) {
                 fprintf(ext,"%s BASE %04d\n%s OFFSET %04d\n\n",
                     ptr->name, ptr->base, ptr->name, ptr->offset);
@@ -245,7 +244,7 @@ void print_ent_nd_ext(char *ent_file_name)
     }
     fclose(ent);
     fclose(ext);
-    
+
     if (wrote_ent == 0) {
         remove(ent_file_name);
     }

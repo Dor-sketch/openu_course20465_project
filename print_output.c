@@ -46,25 +46,26 @@ void make_output(machine_word **code_img, machine_word **data_img, int ic,
 {
     FILE *object;
     char *temp_name;
-    
+
     if ((temp_name = strdup(as_filename)) == NULL) {
         printf("error: name file\n");
         return;
     }
-    
+
     temp_name[strlen(temp_name) -strlen(".as")] = '\0';
     strcat(temp_name,".ob"); /* replace ".as" ending with ".ob" */
+    strcat(temp_name, "\0"); /* add the null character to the end of the string */
     object = fopen(temp_name, "w");
     fprintf(object, "%d %d\n", ic-100, dc); /* the title of the object file */
     print_hex_code(object, code_img, data_img, ic, dc, 100);
     /* +100 becuse the code image starts from 100 */
-    
-    if ((temp_name = (char *) realloc(temp_name, strlen(temp_name)+strlen("t")))
-    	== NULL) {              
+
+    if ((temp_name = (char *) realloc(temp_name, strlen(temp_name)+4))
+    	== NULL) {
         printf("error: out of memory\n");
         return;
     }
-    
+
     temp_name[strlen(temp_name) - strlen(".ob")] = '\0';
     strcat(temp_name, ".ent"); /* replace with "object" extension */
     print_ent_nd_ext(temp_name); /* now handling the symbols' files */

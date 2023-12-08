@@ -3,19 +3,22 @@
 #include "pre.h"
 #include "print_output.h"
 #include "second_pass.h"
+#include "symbol_table.h"
 
 #define MAX_CODE_ARR 600 /* maximum array size for code and data images */
 
 extern char *strdup(const char *);
 
+
+
 /* free_machine_img: frees the memory allocated for the machine image */
 void free_machine_img(machine_word **img, int start, int counter) {
     int i = start;
+    printf("freeing machine image\n");
+    printf("start: %d, counter: %d\n", start, counter);
 
     for (; i < counter && img[i] != NULL; i++) {
-        if (img[i] != NULL) {
-            free(img[i]);
-        }
+        free(img[i]);
     }
 }
 
@@ -28,8 +31,12 @@ void free_resources(char *as_filename, int *error_flag, machine_word **code_img,
     if (code_img != NULL) {
         free_machine_img(code_img, 100, ic);
     }
+
     if (data_img != NULL) {
         free_machine_img(data_img, 0, dc);
+    }
+    else {
+        printf("Error: Null pointer received.\n");
     }
 }
 
@@ -45,8 +52,13 @@ char *update_input_filename(char *filename) {
 }
 
 /* check_error_flag: checks if an error was found during assembly */
-int check_error_flag(int *error_flag) {
-    if (*error_flag == EXIT_FAILURE) {
+int check_error_flag(const int *error_flag) {
+    if (error_flag == NULL) {
+        printf("Error: Null pointer received.\n");
+        return EXIT_FAILURE;
+    }
+
+    if (*error_flag == 1) {
         printf("Error: File has errors, no output files created.\n");
         return EXIT_FAILURE;
     }
@@ -55,8 +67,8 @@ int check_error_flag(int *error_flag) {
 
 /* process_assembly_file: processes the assembly file */
 void process_assembly_file(char *as_filename, int *ic, int *dc,
-                           machine_word **code_img, machine_word **data_img,
-                           int *error_flag) {
+                          machine_word **code_img, machine_word **data_img,
+                          int *error_flag) {
     FILE *am_file = NULL;
 
     expand_macros(as_filename, &am_file);
@@ -65,13 +77,14 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
         return;
     }
 
-    *dc = get_first_img(*ic, *dc, code_img, data_img, am_file, as_filename, error_flag);
+    *dc = get_first_img(*ic, *dc, code_img, data_img, am_file, as_filename,
+                        error_flag);
     if (*error_flag != EXIT_SUCCESS) {
         fclose(am_file);
         return;
     }
 
-    fseek(am_file, 0, SEEK_SET);  /* reset for second pass */
+    fseek(am_file, 0, SEEK_SET); /* reset for second pass */
     *ic = get_second_img(code_img, data_img, am_file, as_filename, error_flag);
     fclose(am_file);
 }
@@ -80,7 +93,8 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
 void assemble(char *argv) {
     machine_word *code_img[MAX_CODE_ARR] = {0};
     machine_word *data_img[MAX_CODE_ARR] = {0};
-    int ic = 100, dc = 0, error_flag = EXIT_SUCCESS;
+    int ic = 100, dc = 0;
+    int error_flag = EXIT_SUCCESS;
     char *as_filename = update_input_filename(argv);
 
     if (!as_filename) {
@@ -88,7 +102,8 @@ void assemble(char *argv) {
         return;
     }
 
-    process_assembly_file(as_filename, &ic, &dc, code_img, data_img, &error_flag);
+    process_assembly_file(as_filename, &ic, &dc, code_img, data_img,
+                          &error_flag);
 
     if (check_error_flag(&error_flag) == EXIT_SUCCESS) {
         make_output(code_img, data_img, ic, dc, as_filename);

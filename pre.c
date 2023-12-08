@@ -5,10 +5,10 @@
 
 #define MAXLINE 81
 #define MAX_LINE_LEN 81
-#define HASHSIZE 1 
-/* hashtable's currently functioning as a linked list. If machine's capable to 
+#define HASHSIZE 1
+/* hashtable's currently functioning as a linked list. If machine's capable to
 	keep more arrays - besides the machine image, it's possible to improve the
-	program preformance by increasing the defined hash size. */ 
+	program preformance by increasing the defined hash size. */
 #define MAXLABEL 31
 
 extern char *strdup(const char*);
@@ -24,7 +24,15 @@ static Macro_slot *m_hashtab[HASHSIZE];
 
 struct Macro_slot * macro_alloc(void)
 {
-    return (Macro_slot *)malloc(sizeof(Macro_slot));
+    Macro_slot *ptr = NULL;
+    if ((ptr = (Macro_slot *)malloc(sizeof(Macro_slot))) == NULL) {
+        printf("error: memory allocation\n");
+        exit(1);
+    }
+    ptr->name = NULL;
+    ptr->lines = NULL;
+    ptr->next = NULL;
+    return ptr;
 }
 
 /* free_macros: a function to free the memmory allocated to macro declarations*/
@@ -32,16 +40,18 @@ void free_macros(void)
 {
     Macro_slot *ptr;
     int i;
-        
+
     for (i = 0; i < HASHSIZE; i++) {
         while (m_hashtab[i] != NULL) {
             ptr = m_hashtab[i]->next;
             free(m_hashtab[i]->lines);
             free(m_hashtab[i]->name);
+            free(m_hashtab[i]->next);
             free(m_hashtab[i]);
             m_hashtab[i] = ptr;
         }
     }
+
 }
 
 
@@ -72,16 +82,15 @@ Macro_slot *mlookup(char *s)
 /* install_macro: save macro's name and content (lines) in macros' hashtable */
 Macro_slot *install_macro(char *name, char *lines)
 {
-    Macro_slot *np;
-    unsigned hashval;
+    unsigned hashval = 0;
+    Macro_slot *np = NULL;
 
     if((np = mlookup(name)) == NULL) { /* not found */
-        np = (Macro_slot *) malloc(sizeof(*np));
+        np = macro_alloc();
         if (np == NULL || (np->name = strdup(name)) == NULL )
             return NULL;
         hashval = macro_hash(name);
-        np->lines = strdup(lines);
-        np->next = m_hashtab[hashval];  
+        np->next = m_hashtab[hashval];
         m_hashtab[hashval] = np;
     } else { /* already there */
         free((void *) np->lines); /* free previous defenition */
@@ -107,7 +116,7 @@ char *copy_macro_lines(FILE **read)
         }
 
         c = getc(*read);
-        
+
         for (i = 0; i < MAXLINE; i++) {
             line[i] = c;
             c = getc(*read);
@@ -116,7 +125,7 @@ char *copy_macro_lines(FILE **read)
                 break;
             }
         }
-        
+
         if (strstr(line, "endm") == NULL) {
             strcat(all_line, line);
         }
@@ -144,7 +153,7 @@ void copy_two_fields(char *first_field, char *second_field, char *curline)
     }
     first_field[j] = '\0';
     j = 0;
-    
+
     for (; i < MAXLINE && curline[i] != '\0'; i++) { /* copy the second field */
         if (!isspace(curline[i])) {
             second_field[j] = curline[i];
@@ -175,34 +184,33 @@ void expand_macros(char *file_name, FILE **read)
     char *second_field;
     char *new_file_name;
     int empty_line;
-    
+
     Macro_slot *saved_macro;
 
     if ((new_file_name = strdup(file_name)) == NULL) {
         printf("error: file name\n");
         exit(1);
     }
-    
-    
+
+
     if ((*read = fopen(file_name, "r")) == NULL) {
     	printf("error: unable to find file '%s'\n", file_name);
     	exit(1);
     }
-    
+
     new_file_name[strlen(new_file_name) -1] = 'm';/*now ".am" instead of ".as"*/
-    write = fopen(new_file_name, "w"); 
+    write = fopen(new_file_name, "w");
 
     first_field = (char *)malloc(MAXLABEL*sizeof(char));
     second_field = (char *)malloc(MAXLABEL*sizeof(char));
-    saved_macro = macro_alloc();
-    
+
     while (c != EOF) {
-        
-        for (i = 0; i < MAXLINE; i++) { 
+
+        for (i = 0; i < MAXLINE; i++) {
         /* copy each line until max-line-length, new line break, or EOF case */
-            
+
             curline[i] = (c = getc(*read));
-           
+
             if (!isspace(c))
             	empty_line = 0;
 
@@ -210,25 +218,28 @@ void expand_macros(char *file_name, FILE **read)
                 fclose(write);
                 *read = fopen(new_file_name, "r");
                 free_macros();
+                free(new_file_name);
+                free(first_field);
+                free(second_field);
                 return;
             }
-            
+
             if (c == '\n') {
                 curline[i] = '\n';
                 curline[++i] = '\0';
                 break;
             }
         }
-        
+
         /* now check for macros declaratins and names (if not an empty line) */
         if (!empty_line)
         	copy_two_fields(first_field, second_field, curline);
-        	
+
         if (strcmp(first_field, "macro") == 0) { /* found a macro */
             saved_macro = install_macro(second_field,copy_macro_lines(read));
         } else if (strlen(second_field) == 0 && strlen(first_field) > 0) {
 			/* if the line contains only one field -> maybe a macro name */
-            if ((saved_macro = mlookup(first_field)) != NULL) 
+            if ((saved_macro = mlookup(first_field)) != NULL)
             		/* searching for the macro in the macro_hash table */
                 fputs(saved_macro->lines, write);
             else { /*not a macro's name -> code's errors will be handled later*/
@@ -243,5 +254,11 @@ void expand_macros(char *file_name, FILE **read)
         memset(curline, '\0', MAXLINE);
         empty_line = 1;
     }
+    free(first_field);
+    free(second_field);
+    free(new_file_name);
+    free_macros();
+    fclose(write);
+
     return;
 }

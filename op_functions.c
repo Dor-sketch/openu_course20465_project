@@ -1,5 +1,5 @@
-#include "op_functions.h"
 #include "syntax.h"
+#include "op_functions.h"
 
 #define TARGT_REGISTER_FIELD 2
 #define SRC_OP_ADR_FIELD 6
@@ -58,8 +58,8 @@ int get_register(char source_word[MAXLINE]) {
 
     invalid_reg = (sizeof(registers) / sizeof(registers[0])) - 1;
 
-    for (i = 0; (i < invalid_reg) &&
-                (strcmp(source_word, registers[i].name) != 0);
+    for (i = 0;
+         (i < invalid_reg) && (strcmp(source_word, registers[i].name) != 0);
          i++)
         ;
 
@@ -112,7 +112,8 @@ void incode_addressing(machine_word **codeword, int address, char *first_op,
     addressing mode;
     register_num register_number;
 
-    codeword[address]->funct_nd_ops |= opcodes[get_opcode(cmd)].op_funct << FUNCT_FIELD; /*set funct field*/
+    codeword[address]->funct_nd_ops |= opcodes[get_opcode(cmd)].op_funct
+                                       << FUNCT_FIELD; /*set funct field*/
 
     mode = get_addressing(first_op); /* get first operand addressing */
 
@@ -122,25 +123,29 @@ void incode_addressing(machine_word **codeword, int address, char *first_op,
 
         if (mode == REG_DIRECT) {
 
-            if ((register_number = registers[get_register(first_op)].reg_num) == INVALID_REG) {
+            if ((register_number = registers[get_register(first_op)].reg_num) ==
+                INVALID_REG) {
 
                 printf("%s:%d: error: invalid source register '%s'\n",
                        srcline->as_filename, srcline->line_num, first_op);
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << SRC_REGISTER_FIELD; /*update machine word*/
+            codeword[address]->funct_nd_ops |=
+                register_number << SRC_REGISTER_FIELD; /*update machine word*/
 
         } else if (mode == INDEX) {
 
             if ((register_number = get_brackets(first_op)) == INVALID_REG) {
 
-                printf("%s:%d: error: invalid source register for index addressing mode\n",
+                printf("%s:%d: error: invalid source register for index "
+                       "addressing mode\n",
                        srcline->as_filename, srcline->line_num);
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << SRC_REGISTER_FIELD;
+            codeword[address]->funct_nd_ops |= register_number
+                                               << SRC_REGISTER_FIELD;
         }
 
         mode = get_addressing(second_op);
@@ -148,14 +153,17 @@ void incode_addressing(machine_word **codeword, int address, char *first_op,
         /* get second operand mode. two ops -> the 2nd is a target operand */
         if (mode == REG_DIRECT) {
 
-            if ((register_number = registers[get_register(second_op)].reg_num) == INVALID_REG) { /* target register error */
+            if ((register_number =
+                     registers[get_register(second_op)].reg_num) ==
+                INVALID_REG) { /* target register error */
 
                 printf("%s:%d: error: invalid target register '%s'\n",
                        srcline->as_filename, srcline->line_num, second_op);
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << TARGT_REGISTER_FIELD;
+            codeword[address]->funct_nd_ops |= register_number
+                                               << TARGT_REGISTER_FIELD;
 
         } else if (mode == INDEX) {
 
@@ -166,7 +174,8 @@ void incode_addressing(machine_word **codeword, int address, char *first_op,
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << TARGT_REGISTER_FIELD;
+            codeword[address]->funct_nd_ops |= register_number
+                                               << TARGT_REGISTER_FIELD;
         }
     } else { /* single operand command -> first operand is a target operand*/
 
@@ -174,25 +183,29 @@ void incode_addressing(machine_word **codeword, int address, char *first_op,
 
         if (mode == REG_DIRECT) { /* register direct mode */
 
-            if ((register_number = registers[get_register(first_op)].reg_num) == INVALID_REG) {
+            if ((register_number = registers[get_register(first_op)].reg_num) ==
+                INVALID_REG) {
 
                 printf("%s:%d: error: invalid target register '%s'\n",
                        srcline->as_filename, srcline->line_num, first_op);
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << TARGT_REGISTER_FIELD;
+            codeword[address]->funct_nd_ops |= register_number
+                                               << TARGT_REGISTER_FIELD;
 
         } else if (mode == INDEX) {
 
             if ((register_number = get_brackets(first_op)) == INVALID_REG) {
 
-                printf("%s:%d: error: invalid target register for index addressing mode\n",
+                printf("%s:%d: error: invalid target register for index "
+                       "addressing mode\n",
                        srcline->as_filename, srcline->line_num);
                 srcline->error_flag = EXIT_FAILURE;
             }
 
-            codeword[address]->funct_nd_ops |= register_number << TARGT_REGISTER_FIELD;
+            codeword[address]->funct_nd_ops |= register_number
+                                               << TARGT_REGISTER_FIELD;
         }
     }
 }
@@ -215,11 +228,14 @@ int get_words_num(machine_word **code_img, int address, char *first_op,
     for (j = 1; j <= ops_num; j++) { /* until checking every operand (1 or 2)*/
 
         if ((mode <= 2) && (mode >= 0)) {
-            if ((code_img[address + extra_words] = (machine_word *)malloc(sizeof(machine_word))) == NULL) {
+            if ((code_img[address + extra_words] =
+                     (machine_word *)malloc(sizeof(machine_word))) == NULL) {
                 return -EXIT_FAILURE;
             }
-            code_img[address + extra_words]->funct_nd_ops = 0;     /*avoid unwanted values*/
-            code_img[address + extra_words]->AER_field = ABSOLUTE; /*'A' field */
+            code_img[address + extra_words]->funct_nd_ops =
+                0; /*avoid unwanted values*/
+            code_img[address + extra_words]->AER_field =
+                ABSOLUTE; /*'A' field */
 
             if (mode == IMMEDIATE) {
                 if (first_op[pos] == '-') {
@@ -227,15 +243,21 @@ int get_words_num(machine_word **code_img, int address, char *first_op,
                     pos++;
                 }
                 if ((temp = atoi(&first_op[pos])) == 0) { /* missing integer */
-                    printf("%s:%d: error: missing a valid number for immediate addressing mode\n",
+                    printf("%s:%d: error: missing a valid number for immediate "
+                           "addressing mode\n",
                            srcline->as_filename, srcline->line_num);
                 }
                 code_img[address + extra_words]->funct_nd_ops = temp * sign;
-                extra_words++; /* add one extra data word with the operand value */
+                extra_words++; /* add one extra data word with the operand value
+                                */
             } else if ((mode == INDEX) || (mode == DIRECT)) {
                 for (i = 1; i <= 2; i++) {
-                    if ((code_img[address + extra_words] = (machine_word *)malloc(sizeof(machine_word))) == NULL) {
-                        return -EXIT_FAILURE;
+                    /* avoid double allocation */
+                    if (code_img[address + extra_words] == NULL) {
+                        if ((code_img[address + extra_words] = (machine_word *)
+                                 malloc(sizeof(machine_word))) == NULL) {
+                            return -EXIT_FAILURE;
+                        }
                     }
                     code_img[address + extra_words]->funct_nd_ops = 0;
                     code_img[address + extra_words]->AER_field = ABSOLUTE;
@@ -243,9 +265,11 @@ int get_words_num(machine_word **code_img, int address, char *first_op,
                 }
             }
         }
-        if (ops_num == 2) {                   /* if there's a 2nd operands prepere for another round */
+        if (ops_num ==
+            2) { /* if there's a 2nd operands prepere for another round */
             mode = get_addressing(second_op); /* now for the target operand */
-            first_op = second_op;             /*set second operand value to repeat the loop*/
+            first_op =
+                second_op; /*set second operand value to repeat the loop*/
         }
     }
     return extra_words;

@@ -7,13 +7,13 @@
 
 addressing get_addressing(char *operand_field);
 
-/* update_direct_addressing: a function to set the binary value of words using 
+/* update_direct_addressing: a function to set the binary value of words using
    direct addressing mode*/
-void update_direct_addressing(char *operand, int op_position, 
+void update_direct_addressing(char *operand, int op_position,
 							  machine_word **code_img, src_op_line *srcline)
 {
     Symtab_slot *np = NULL;
-    
+
     if ((np = lookup(operand)) == NULL) {
         printf("%s:%d: error: failed finding symbol '%s' for direct addressing mode\n",
             srcline->as_filename, srcline->line_num, operand);
@@ -21,7 +21,7 @@ void update_direct_addressing(char *operand, int op_position,
         return; /* symbol not found */
     }
     code_img[srcline->cur_ic + op_position]->funct_nd_ops = np->base;
-    
+
     if (np->is_external == 1) { /* true if operand is an external symbol */
         code_img[srcline->cur_ic + op_position]->AER_field = EXTR;/*turn on'E'*/
         code_img[srcline->cur_ic + op_position]->funct_nd_ops = 0;
@@ -29,16 +29,16 @@ void update_direct_addressing(char *operand, int op_position,
         np->offset = srcline->cur_ic + op_position + 1;
     } else { /* true if its relocatable */
         code_img[srcline->cur_ic + op_position]->AER_field = RELOCA;/*turn 'R'*/
-    }    
+    }
     op_position++;
     code_img[srcline->cur_ic + op_position]->funct_nd_ops = np->offset;
-    
+
     if (np->is_external == 1) {
         code_img[srcline->cur_ic + op_position]->AER_field = EXTR;
         code_img[srcline->cur_ic + op_position]->funct_nd_ops = 0;
     } else {
         code_img[srcline->cur_ic + op_position]->AER_field = RELOCA;
-    }    
+    }
 }
 
 /* convert_declaration: get the source line and convert it to machine words*/
@@ -137,26 +137,26 @@ int get_second_img(machine_word **code_img, machine_word **data_img,
     while (srcline->alignedsrc[0] != EOF) { /* until the end of the input */
         identify_lables(srcline);
         /* first check if the line contains special data '.' sign */
-        if (srcline->alignedsrc[0] == '.' || 
-            srcline->alignedsrc[strlen(srcline->label) + 2] == '.') { 
-            
-            data_type = (char*) malloc(strlen(".entry"));
-            get_entry(data_type, srcline); 
-            
+        if (srcline->alignedsrc[0] == '.' ||
+            srcline->alignedsrc[strlen(srcline->label) + 2] == '.') {
+
+            data_type = (char*) malloc(strlen(".entry")+1);
+            get_entry(data_type, srcline);
+
             if (strcmp(data_type, ".entry") == MATCH) { /* true if its entry */
-                /* unpdate the symbol values in the symbols table */
+                /* update the symbol values in the symbols table */
                 if ((install(srcline->label, 0, ".entry", srcline)) == NULL) {
                     free(data_type);
                     return EXIT_FAILURE;
                 }
-            }  
+            }
             free(data_type);
         }
         else { /* operation command */
             srcline->cur_ic = srcline->cur_ic+update_operands(srcline, code_img);
         }
         get_nl_ready(srcline);
-        copy_alligned_line(srcline, ex_src_fl); 
+        copy_alligned_line(srcline, ex_src_fl);
     }
     non_pointer_return = srcline->cur_ic;
     *error_flag = srcline->error_flag;
