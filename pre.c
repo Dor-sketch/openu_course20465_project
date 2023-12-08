@@ -101,7 +101,7 @@ Macro_slot *install_macro(char *name, char *lines)
 
 
 /* copy_macro_lines: copy the lines between the macro name and "endm"*/
-char *copy_macro_lines(FILE **read)
+char *copy_macro_lines(FILE *read)
 {
     char line[MAXLINE] = {0};  /* initialize to all zeros*/
     char *all_line;
@@ -115,11 +115,11 @@ char *copy_macro_lines(FILE **read)
             line[i] = '\0';
         }
 
-        c = getc(*read);
+        c = getc(read);
 
         for (i = 0; i < MAXLINE; i++) {
             line[i] = c;
-            c = getc(*read);
+            c = getc(read);
             if (c == '\n') {
                 line[i+1] = '\n';
                 break;
@@ -167,6 +167,18 @@ void copy_two_fields(char *first_field, char *second_field, char *curline)
     return;
 }
 
+/* open_file: check if file exists and open it */
+FILE *open_file(char *file_name)
+{
+    FILE *fp;
+
+    if ((fp = fopen(file_name, "r")) == NULL) {
+        printf("error: unable to find file '%s'\n", file_name);
+        exit(1);
+    }
+    return fp;
+}
+
 /* expand_macros: the function gets a file name and file pointer. It creats a
 	a new new-file - identical to the original file which its name passed, but
 	with macro-defenitions expanded. After the file created it points the given
@@ -174,9 +186,10 @@ void copy_two_fields(char *first_field, char *second_field, char *curline)
 	function usesstwo FILE pointers: the input pointer for reading, and another
 	for writing. It examines each line separately, and places macros contents
 	instead of their names into the new file. */
-void expand_macros(char *file_name, FILE **read)
+char * expand_macros(char *file_name)
 {
     FILE *write;
+    FILE *read;
     char c = ' ';
     char curline[MAXLINE] = {0}; /* I assumed the max macro size*/
     int i;
@@ -192,11 +205,8 @@ void expand_macros(char *file_name, FILE **read)
         exit(1);
     }
 
+    read = open_file(file_name);
 
-    if ((*read = fopen(file_name, "r")) == NULL) {
-    	printf("error: unable to find file '%s'\n", file_name);
-    	exit(1);
-    }
 
     new_file_name[strlen(new_file_name) -1] = 'm';/*now ".am" instead of ".as"*/
     write = fopen(new_file_name, "w");
@@ -209,19 +219,18 @@ void expand_macros(char *file_name, FILE **read)
         for (i = 0; i < MAXLINE; i++) {
         /* copy each line until max-line-length, new line break, or EOF case */
 
-            curline[i] = (c = getc(*read));
+            curline[i] = (c = getc(read));
 
             if (!isspace(c))
             	empty_line = 0;
 
             if (c == EOF) {
+                fclose(read);
                 fclose(write);
-                *read = fopen(new_file_name, "r");
                 free_macros();
-                free(new_file_name);
                 free(first_field);
                 free(second_field);
-                return;
+                return new_file_name;
             }
 
             if (c == '\n') {
@@ -260,5 +269,5 @@ void expand_macros(char *file_name, FILE **read)
     free_macros();
     fclose(write);
 
-    return;
+    return new_file_name;
 }

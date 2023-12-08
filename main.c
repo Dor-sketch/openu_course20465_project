@@ -14,8 +14,6 @@ extern char *strdup(const char *);
 /* free_machine_img: frees the memory allocated for the machine image */
 void free_machine_img(machine_word **img, int start, int counter) {
     int i = start;
-    printf("freeing machine image\n");
-    printf("start: %d, counter: %d\n", start, counter);
 
     for (; i < counter && img[i] != NULL; i++) {
         free(img[i]);
@@ -70,9 +68,17 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
                           machine_word **code_img, machine_word **data_img,
                           int *error_flag) {
     FILE *am_file = NULL;
+    char *am_filename = expand_macros(as_filename);
+    if (!am_filename) {
+        *error_flag = EXIT_FAILURE;
+        return;
+    }
 
-    expand_macros(as_filename, &am_file);
+    am_file = fopen(am_filename, "r");
+    free(am_filename);
     if (!am_file) {
+        printf("Error: Failed to open file %s.\n", am_filename);
+        free(am_filename);
         *error_flag = EXIT_FAILURE;
         return;
     }

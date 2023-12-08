@@ -183,7 +183,6 @@ void install_numbers(src_op_line *srcline, machine_word **data_img)
 
                 data_img[srcline->cur_dc]->funct_nd_ops = temp_num*is_negative;
                 srcline->cur_dc++; /*done intall data, now update data counter*/
-                printf("data counter: %d\n", srcline->cur_dc);
                 if ((data_img[srcline->cur_dc]
                 	= (machine_word *)malloc(sizeof(machine_word))) == NULL) {
         	    	printf("%s:%d: error: data image assress '%d' unavailable\n",

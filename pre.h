@@ -5,4 +5,4 @@
 	function usesstwo FILE pointers: the input pointer for reading, and another
 	for writing. It examines each line separately, and places macros contents
 	instead of their names into the new file. */
-void expand_macros(char *file_name, FILE **read);
+char* expand_macros(char *file_name);
