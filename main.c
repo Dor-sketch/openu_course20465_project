@@ -85,10 +85,7 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
 
     *dc = get_first_img(*ic, *dc, code_img, data_img, am_file, as_filename,
                         error_flag);
-    if (*error_flag != EXIT_SUCCESS) {
-        fclose(am_file);
-        return;
-    }
+
 
     fseek(am_file, 0, SEEK_SET); /* reset for second pass */
     *ic = get_second_img(code_img, data_img, am_file, as_filename, error_flag);
@@ -113,6 +110,10 @@ void assemble(char *argv) {
 
     if (check_error_flag(&error_flag) == EXIT_SUCCESS) {
         make_output(code_img, data_img, ic, dc, as_filename);
+    }
+    else {
+        printf("Error: File has errors, no output files created.\n");
+        free_symbols();
     }
 
     free_resources(as_filename, &error_flag, code_img, data_img, ic, dc);
