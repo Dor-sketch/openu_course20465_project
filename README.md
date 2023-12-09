@@ -4,10 +4,24 @@
 
 This project involved the development of an assembler for a specialized assembly language. Its primary aim was to convert human-readable assembly instructions into binary machine code, bridging the gap between high-level programming concepts and low-level execution on computers.
 
-Implemented in `ANSI C`, this project demonstrates a strong understanding of foundational programming principles. It was part of the `20465 System Programming Laboratory` course at _The Open University of Israel_ and achieved a grade of `98`.
+Implemented in `ANSI C`, this project demonstrates a strong understanding of foundational programming principles. It was part of the `20465 System Programming Laboratory` course at _The Open University of Israel_ studied during the 2021-2022 academic year,  and achieved a grade of `98`.
 
 ![Alt text](image-1.png)
+
 ---
+
+## Features 🚀
+
+- **Preprocessing** 🧹: The assembler supports preprocessing tasks, including macro expansion and line numbering.
+- **Syntax Checking** ✅: The assembler ensures syntax accuracy, checking for valid opcodes and operands.
+- **Symbol Table** 📚: The assembler generates a symbol table, computing label memory addresses.
+- **Machine Code Generation** 💻: The assembler produces the machine code and data images.
+- **Output Files** 📁: The assembler prints output files such as the machine code file, external data words file, and entry type symbols file.
+- **Error Handling** 🚨: The assembler handles various syntax and semantic errors, providing descriptive error messages, including line numbers and error types with clickable links to the relevant code.
+- **Dynamic Memory Allocation** 🧠: The assembler uses dynamic memory allocation to manage memory efficiently.
+- **Modular Design** 🧩: The assembler is designed with a modular architecture, with each module responsible for a specific task.
+- **Coding Standards** 📏: The assembler adheres to the project's coding standards, including naming conventions, indentation, and documentation.
+- **Testing** 🧪: The assembler is thoroughly tested, with a test suite that covers all possible scenarios, including `valgrind` memory leak checks with no errors.
 
 ## 🧩 Modules
 

@@ -76,7 +76,8 @@ int get_string_start(src_op_line *srcline) {
     if (strlen(srcline->label) > 0) { /* true if ther's a label to install */
         if (install(get_label(srcline), srcline->cur_dc + 1, ".data",
                     srcline) == NULL) {
-            printf("error: symbol is aleady defined\n");
+            printf("%s:%d: error: symbol '%s' aleady defined\n",
+                   srcline->as_filename, srcline->line_num, srcline->label);
         }
         start += strlen(srcline->label);
     }
@@ -161,6 +162,14 @@ int get_sign(src_op_line *srcline, int pos) {
     return (srcline->alignedsrc[pos] == '-') ? -1 : 1;
 }
 
+/* handle_sign: updates the sign of the number at the given position */
+void handle_sign(src_op_line *srcline, int *pos, int *sign) {
+    if (is_sign(srcline, *pos)) {
+        *sign = get_sign(srcline, *pos);
+        (*pos)++;
+    }
+}
+
 /* has_data_img_changed: prints an error message if the data image hasn't
    changed */
 void has_data_img_changed(machine_word **data_img, src_op_line *srcline,
@@ -199,17 +208,42 @@ int skip_spaces_until_comma(src_op_line *srcline, int *pos) {
 
 /* invalid_number: prints an error message for an invalid number */
 void invalid_number(src_op_line *srcline, int pos) {
-    printf("%s:%d: error: invalid digit '%c'\n", srcline->as_filename,
-           srcline->line_num, srcline->alignedsrc[pos]);
-    srcline->error_flag = EXIT_FAILURE;
+    /* make sure its not end of line */
+    if (srcline->alignedsrc[pos] == '\n') {
+        printf("%s:%d: error: missing a number after ','\n",
+               srcline->as_filename, srcline->line_num);
+        srcline->error_flag = EXIT_FAILURE;
+        return;
+    } else {
+        printf("%s:%d: error: invalid digit '%c'\n", srcline->as_filename,
+               srcline->line_num, srcline->alignedsrc[pos]);
+        srcline->error_flag = EXIT_FAILURE;
+    }
+}
+
+/* parse_number: parses a number from the source line */
+int parse_number(src_op_line *srcline, int *pos, int *temp_num) {
+    int sign = 1;
+    if (srcline->alignedsrc[*pos] == ' ') {
+        (*pos)++;
+    }
+    handle_sign(srcline, pos, &sign);
+    if (!isdigit(srcline->alignedsrc[*pos])) {
+        invalid_number(srcline, *pos);
+        return 0;
+    }
+    while (isdigit(srcline->alignedsrc[*pos])) {
+        *temp_num = *temp_num * 10 + (srcline->alignedsrc[*pos] - '0');
+        (*pos)++;
+    }
+    *temp_num *= sign;
+    return 1;
 }
 
 /* install_numbers: creates a binary-word representation for every number
    after the special word ".data" */
 void install_numbers(src_op_line *srcline, machine_word **data_img) {
     int pos = strlen(".data "); /* set position on the first operand */
-    int inside_number = 0;
-    int sign = 1;
     int temp_num = 0;
     int was_number = 0; /* flags to deal with the last number */
     int after_comma = 0;
@@ -229,37 +263,20 @@ void install_numbers(src_op_line *srcline, machine_word **data_img) {
     }
 
     for (; pos < strlen(srcline->alignedsrc); pos++) { /* until end of line */
-        if (inside_number == 0) { /* update the sign at the begining */
-            if (is_sign(srcline, pos)) {
-                sign = get_sign(srcline, pos);
-                pos++;
-            }
-        }
-        inside_number = 1;
+        was_number = parse_number(srcline, &pos, &temp_num);
+        check_missing_number(srcline, after_comma, was_number);
 
-        if (!isdigit(srcline->alignedsrc[pos])) {
+        if (was_number) {
             if (is_valid_number_end(srcline, pos)) {
-                check_missing_number(srcline, after_comma, was_number);
-                data_img[srcline->cur_dc]->funct_nd_ops = temp_num * sign;
+                data_img[srcline->cur_dc]->funct_nd_ops = temp_num;
                 srcline->cur_dc++; /*done intall data, update data counter*/
-                if (!data_img_malloc(data_img, srcline)) {
+                if (!data_img_malloc(data_img, srcline))
                     return;
-                }
-                /* allocated space now get ready for next number */
-
-                after_comma = skip_spaces_until_comma(srcline, &pos);
-                inside_number = 0;
-                was_number = 0;
-                temp_num = 0;
-                sign = 1;
-            } else { /* if reads an invald character (nor a digit or a comma) */
-                invalid_number(srcline, pos);
             }
-        } else if (inside_number) { /* update temp_num */
-            temp_num = temp_num * 10 + (srcline->alignedsrc[pos] - '0');
-            was_number = 1;
         }
-    } /* finished reading the numbers and updatind the Data-Counter */
+        after_comma = skip_spaces_until_comma(srcline, &pos);
+    }
+    /* finished reading the numbers and updatind the Data-Counter */
     has_data_img_changed(data_img, srcline, old_dc);
     free(data_img[srcline->cur_dc]); /* free the last allocated space */
 }

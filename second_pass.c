@@ -123,8 +123,8 @@ int get_second_img(machine_word **code_img, machine_word **data_img,
 {
     src_op_line *srcline = srclinealoc();
     char *data_type;
-    int non_pointer_return;
     /* a variable to return the value after freeing the structure */
+    int non_pointer_return;
 
     srcline->cur_ic = 100; /* get the source line structure ready */
     srcline->cur_dc = 0;

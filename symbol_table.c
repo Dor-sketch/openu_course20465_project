@@ -69,7 +69,7 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
 	/* first check if the label isn't a saved word */
     for (i = 0; i < sizeof(saved_words)/sizeof(char*); i++) {
     	if ((strcmp(name, saved_words[i])) == 0) {
-    		printf("%s%d: error: word '%s' can't be a saved word\n",
+    		printf("%s:%d: error: word '%s' can't be a saved word\n",
             	srcline->as_filename, srcline->line_num, name);
             srcline->error_flag = EXIT_FAILURE;
             return NULL;
@@ -79,7 +79,7 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
     if ((np = lookup(name)) == NULL) { /* not found */
         np = calloc(1, sizeof(Symtab_slot));
         if (np == NULL || (np->name = strdup(name)) == NULL) {
-            printf("%s%d: error: failed duplicating symbol %s\n",
+            printf("%s:%d: error: failed duplicating symbol %s\n",
             	srcline->as_filename, srcline->line_num, name);
             srcline->error_flag = EXIT_FAILURE;
             return NULL;
@@ -106,14 +106,14 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
             np->is_entry = 1;
             return np;
         } else {
-            printf("%s%d: error: redefinition of saved symbol %s\n",
+            printf("%s:%d: error: redefinition of saved symbol %s\n",
                 srcline->as_filename, srcline->line_num, name);
             printf("artbt is %s and in enrty = %d\n\n", artbt, np->is_entry);
             srcline->error_flag = EXIT_FAILURE;
             return NULL;
         }
     } /* symbol's unfound */
-    printf("%s%d: error: failed finding symbol %s\n",
+    printf("%s:%d: error: failed finding symbol %s\n",
     	srcline->as_filename, srcline->line_num, name);
     srcline->error_flag = EXIT_FAILURE;
     return NULL;

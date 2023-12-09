@@ -57,7 +57,6 @@ int check_error_flag(const int *error_flag) {
     }
 
     if (*error_flag == 1) {
-        printf("Error: File has errors, no output files created.\n");
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
@@ -82,6 +81,8 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
         *error_flag = EXIT_FAILURE;
         return;
     }
+    /* update the filename to end with ".m" for error messages */
+    as_filename[strlen(as_filename) - 1] = 'm';
 
     *dc = get_first_img(*ic, *dc, code_img, data_img, am_file, as_filename,
                         error_flag);
