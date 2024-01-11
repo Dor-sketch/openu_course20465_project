@@ -1,15 +1,13 @@
-#include "syntax.h"
 #include "first_pass.h"
 #include "pre.h"
 #include "print_output.h"
 #include "second_pass.h"
 #include "symbol_table.h"
+#include "syntax.h"
 
 #define MAX_CODE_ARR 600 /* maximum array size for code and data images */
 
 extern char *strdup(const char *);
-
-
 
 /* free_machine_img: frees the memory allocated for the machine image */
 void free_machine_img(machine_word **img, int start, int counter) {
@@ -32,8 +30,7 @@ void free_resources(char *as_filename, int *error_flag, machine_word **code_img,
 
     if (data_img != NULL) {
         free_machine_img(data_img, 0, dc);
-    }
-    else {
+    } else {
         printf("Error: Null pointer received.\n");
     }
 }
@@ -64,8 +61,8 @@ int check_error_flag(const int *error_flag) {
 
 /* process_assembly_file: processes the assembly file */
 void process_assembly_file(char *as_filename, int *ic, int *dc,
-                          machine_word **code_img, machine_word **data_img,
-                          int *error_flag) {
+                           machine_word **code_img, machine_word **data_img,
+                           int *error_flag) {
     FILE *am_file = NULL;
     char *am_filename = expand_macros(as_filename);
     if (!am_filename) {
@@ -86,7 +83,6 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
 
     *dc = get_first_img(*ic, *dc, code_img, data_img, am_file, as_filename,
                         error_flag);
-
 
     fseek(am_file, 0, SEEK_SET); /* reset for second pass */
     *ic = get_second_img(code_img, data_img, am_file, as_filename, error_flag);
@@ -111,8 +107,7 @@ void assemble(char *argv) {
 
     if (check_error_flag(&error_flag) == EXIT_SUCCESS) {
         make_output(code_img, data_img, ic, dc, as_filename);
-    }
-    else {
+    } else {
         printf("Error: File has errors, no output files created.\n");
         free_symbols();
     }
@@ -121,13 +116,21 @@ void assemble(char *argv) {
     printf("Finished assembling %s\n", argv);
 }
 
+extern void start_gui(int argc, char *argv[]);
+extern int get_gui_input(char ***argv);
+
 /* main: main function gets the input files and calls the assembler */
 int main(int argc, char *argv[]) {
     int i = 0;
 
     if (argc <= 1) {
-        printf("Error: Program needs at least one file to assemble.\n");
-        return EXIT_FAILURE;
+        /* no input files - try use the GUI */
+        start_gui(argc, argv);
+        argc = get_gui_input(&argv);
+        if (argc <= 1) {
+            printf("Error: No input files.\n");
+            return EXIT_FAILURE;
+        }
     }
 
     for (i = 1; i < argc; i++) {

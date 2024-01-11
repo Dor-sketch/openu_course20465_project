@@ -3,6 +3,7 @@
 
 # Executables
 prog
+gui
 
 # Compiled libraries
 *.so
