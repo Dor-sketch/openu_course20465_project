@@ -1,9 +1,9 @@
+#include "syntax.h"
 #include "first_pass.h"
 #include "pre.h"
 #include "print_output.h"
 #include "second_pass.h"
 #include "symbol_table.h"
-#include "syntax.h"
 
 #define MAX_CODE_ARR 600 /* maximum array size for code and data images */
 

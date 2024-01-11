@@ -1,7 +1,7 @@
 CC = gcc
 CXX = g++
-CFLAGS = -g -ansi -Wall -pedantic `pkg-config --cflags gtk+-3.0`
-CPPFLAGS = -g -ansi -Wall -pedantic -std=c++17 `pkg-config --libs gtk+-3.0`
+CFLAGS = -g -ansi -Wall -pedantic
+CPPFLAGS = -g -Wall -pedantic -std=c++17
 CXXFLAGS = $(CPPFLAGS) -std=c++17
 GTKFLAGS = `pkg-config --cflags --libs gtk+-3.0`
 
@@ -14,12 +14,11 @@ assembler: main.o pre.o first_pass.o second_pass.o print_output.o op_functions.o
 gui: gui.o main.o pre.o first_pass.o second_pass.o print_output.o op_functions.o symbol_table.o data_functions.o util.o
 	$(CXX) $(CPPFLAGS) -o $@ $^ $(GTKFLAGS) `pkg-config --cflags --libs gtk+-3.0`
 
-gui.o: gui.cpp
-	g++ -c $(CPPFLAGS) gui.cpp -o gui.o `pkg-config --cflags --libs gtk+-3.0`
-
-
 main.o: main.c syntax.h first_pass.h
 	$(CC) $(CFLAGS) -c main.c  -o main.o
+
+gui.o: gui.cpp
+	g++ -c $(CPPFLAGS) gui.cpp -o gui.o `pkg-config --cflags --libs gtk+-3.0`
 
 first_pass.o:  first_pass.c op_functions.h symbol_table.h data_functions.h util.h
 	$(CC) $(CFLAGS) -c first_pass.c -o first_pass.o

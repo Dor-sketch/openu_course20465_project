@@ -1,13 +1,5 @@
-#include "first_pass.h"
-#include "pre.h"
-#include "print_output.h"
-#include "second_pass.h"
-#include "symbol_table.h"
-#include "syntax.h"
-#include </usr/include/gtk-3.0/gtk/gtk.h>
-#include <iostream>
-#include <string>
-#include <vector>
+#include <gtk/gtk.h>
+
 
 extern "C" void assemble(char *argv);
 
@@ -15,8 +7,7 @@ class gui {
   public:
     gui() : window(nullptr), button(nullptr), entry(nullptr), label(nullptr) {}
     ~gui() {
-        gtk_widget_destroy(window);
-        gtk_main_quit();
+        exit(0);
     }
 
     static void on_button_clicked(GtkWidget *widget, gpointer data) {
