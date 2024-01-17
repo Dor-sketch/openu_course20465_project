@@ -68,9 +68,6 @@ int get_register(char source_word[MAXLINE]) {
 
 /* get_addressing: get the addressing type of the operand field */
 addressing get_addressing(char *operand_field) {
-    int i;
-
-    i = 2; /* +1 becuse the counting will start from 1 */
 
     if (*operand_field == '#')
         return IMMEDIATE;
@@ -80,7 +77,6 @@ addressing get_addressing(char *operand_field) {
             return REG_DIRECT;
 
     while (*operand_field++ != '\0') {
-        i++;
         if (*operand_field == '[') { /* maybe valid index addressing */
             return INDEX;
         }

@@ -4,10 +4,14 @@ This project involved the development of an assembler for a specialized assembly
 
 Implemented in `ANSI C`, this project demonstrates a strong understanding of foundational programming principles. It was part of the `20465 System Programming Laboratory` course at _The Open University of Israel_ studied during the 2021-2022 academic year,  and achieved a grade of `98`.
 
-<img src="./images/image-1.png" width="500" text-align="center" align="center" magrin="auto" />
+<p align="center">
+  <img src="./images/image-1.png" width="400">
+</p>
 
 ---
+
 **Table of Contents**
+
 <!-- @import "[TOC]" {cmd="toc" depthFrom=2 depthTo=2 orderedList=false} -->
 
 <!-- code_chunk_output -->
@@ -21,35 +25,53 @@ Implemented in `ANSI C`, this project demonstrates a strong understanding of fou
 
 <!-- /code_chunk_output -->
 
-
 ---
 
 ## 🚀 Features
 
 - **Preprocessing** 🧹: The assembler supports preprocessing tasks, including macro expansion and line numbering.
+
 - **Syntax Checking** ✅: The assembler ensures syntax accuracy, checking for valid opcodes and operands.
+
 - **Symbol Table** 📚: The assembler generates a symbol table, computing label memory addresses.
+
 - **Machine Code Generation** 💻: The assembler produces the machine code and data images.
+
 - **Output Files** 📁: The assembler prints output files such as the machine code file, external data words file, and entry type symbols file.
+
 - **Error Handling** 🚨: The assembler handles various syntax and semantic errors, providing descriptive error messages, including line numbers and error types with clickable links to the relevant code.
+
 - **Dynamic Memory Allocation** 🧠: The assembler uses dynamic memory allocation to manage memory efficiently.
 - **Modular Design** 🧩: The assembler is designed with a modular architecture, with each module responsible for a specific task.
+
 - **Coding Standards** 📏: The assembler adheres to the project's coding standards, including naming conventions, indentation, and documentation.
+
 - **Testing** 🧪: The assembler is thoroughly tested, with a test suite that covers all possible scenarios, including `valgrind` memory leak checks with no errors.
 
 ---
 
 ## 🤖 Usage
 
-### New GUI!
+### New GUI
 
-![Alt text](./images/image.png)
-
-![Alt text](./images/image-2.png)
+| ![Alt text](./images/image.png) | ![Alt text](./images/image-2.png) |
+| :-----------------------------: | :-------------------------------: |
 
 The assembler now includes a new GUI, allowing users to assemble assembly code with a few clicks. The GUI is built with `Gtk+`. It's written in `c++` but integrates with the assembler's `c` codebase using `extern "C"`. This allows the assembler `main` function to get services from the GUI, such as the input file path and output directory path without having to change the assembler's codebase.
 
-**Note:** The GUI is currently only tested on Linux and consider a work in progress. For stable usage, please use the command line interface or prevoius version of the Assembler.
+**Note:** The GUI is currently only tested on `Ubuntu 22.04` and `MacOS Sonoma` and consider a work in progress. For stable usage, please use the command line interface or prevoius version of the Assembler.
+
+---
+
+Before runing the assembler, make sure you have `gcc` and `Gtk+` installed on your machine.
+
+You can install `Gtk+` on `MacOS` using `brew`:
+
+```bash
+brew install gtk+3
+```
+
+---
 
 ### Command Line
 

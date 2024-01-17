@@ -41,6 +41,10 @@ Symtab_slot *lookup(char *label)
 {
     Symtab_slot *np;
 
+    if (label == NULL) {
+        return NULL;
+    }
+
     for (np = hashtab[hash(label)]; np != NULL; np = np->next) {
         if (strcmp(label, np->name) == 0) {
             return np; /* found */
@@ -49,13 +53,48 @@ Symtab_slot *lookup(char *label)
     return NULL; /* incase not found */
 }
 
-static char *saved_words[] = {
+static const char *saved_words[] = {
 	".string", ".data", ".entry", ".external",
 	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
 	"r12", "r13", "r14", "r15",
 	"mov", "cmp", "add", "sub", "lea", "clr", "not", "inc", "dec", "jmp", "bne",
 	"jsr", "red", "prn", "rts", "stop"
 };
+
+int is_saved_word(char *name, src_op_line *srcline)
+{
+    int i;
+    for (i = 0; i < sizeof(saved_words) / sizeof(char *); i++) {
+        if ((strcmp(name, saved_words[i])) == 0) {
+            printf("%s:%d: error: word '%s' can't be a saved word\n",
+                   srcline->as_filename, srcline->line_num, name);
+            srcline->error_flag = EXIT_FAILURE;
+            return EXIT_FAILURE;
+        }
+    }
+    return EXIT_SUCCESS;
+}
+
+/* update the symbol's attributes using the given char pointer */
+Symtab_slot *update_symbol_attributes(Symtab_slot *symbol, char *artbt) {
+    if (strcmp(artbt, ".code") == 0) {
+        symbol->is_code = 1;
+    }
+    if (strcmp(artbt, ".data") == 0) {
+        symbol->is_data = 1;
+    }
+    if (strcmp(artbt, ".extern") == 0) {
+        symbol->is_external = 1;
+    }
+    if (strcmp(artbt, ".entry") == 0) {
+        if (symbol->is_entry == 1) {
+            printf("error: redefinition of saved symbol %s\n", symbol->name);
+            return NULL;
+        }
+        symbol->is_entry = 1;
+    }
+    return symbol;
+}
 
 /* install: gets a symbol name and details and saves them into a "symbol slot"
 	in symbols hash table. returns a pointer to the "symbol-slot" if succeded,
@@ -64,17 +103,11 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
 {
     Symtab_slot *np;
     unsigned hashval;
-    int i;
 
 	/* first check if the label isn't a saved word */
-    for (i = 0; i < sizeof(saved_words)/sizeof(char*); i++) {
-    	if ((strcmp(name, saved_words[i])) == 0) {
-    		printf("%s:%d: error: word '%s' can't be a saved word\n",
-            	srcline->as_filename, srcline->line_num, name);
-            srcline->error_flag = EXIT_FAILURE;
-            return NULL;
-          }
-	}
+    if (is_saved_word(name, srcline) == EXIT_FAILURE) {
+        return NULL;
+    }
 
     if ((np = lookup(name)) == NULL) { /* not found */
         np = calloc(1, sizeof(Symtab_slot));
@@ -88,35 +121,14 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
         np->next = hashtab[hashval];/* move forward what's in the linked-list */
         np->value = value;
         hashtab[hashval] = np; /* take its place at the begining of the list */
-
-        /* now update the symbol's attributes using the given char pointer */
-        if (strcmp(artbt, ".code") == 0) {
-            np->is_code = 1;
-        }
-        if (strcmp(artbt, ".data") == 0) {
-            np->is_data = 1;
-        }
-        if (strcmp(artbt, ".extern") == 0) {
-            np->is_external = 1;
-        }
-        return np;
     }
-    else { /* symbol's already in the table */
-        if ((strcmp(artbt, ".entry") == 0) && (np->is_entry != 1)) {
-            np->is_entry = 1;
-            return np;
-        } else {
-            printf("%s:%d: error: redefinition of saved symbol %s\n",
-                srcline->as_filename, srcline->line_num, name);
-            printf("artbt is %s and in enrty = %d\n\n", artbt, np->is_entry);
-            srcline->error_flag = EXIT_FAILURE;
-            return NULL;
-        }
-    } /* symbol's unfound */
-    printf("%s:%d: error: failed finding symbol %s\n",
-    	srcline->as_filename, srcline->line_num, name);
-    srcline->error_flag = EXIT_FAILURE;
-    return NULL;
+    /* update the symbol's attributes */
+    if ((np = update_symbol_attributes(np, artbt)) == NULL) {
+        printf("%s:%d: error: failed finding symbol %s\n",
+               srcline->as_filename, srcline->line_num, name);
+        srcline->error_flag = EXIT_FAILURE;
+    }
+    return np;
 }
 
 /* get_base: gets a place on the image ("value") and returns its "base" number*/
@@ -165,7 +177,7 @@ void print_table(void)
     i = 0;
     j = 0;
 
-    for (i = 0; i< HASHSIZE; i++) {
+    for (; i< HASHSIZE; i++) {
 
         ptr = hashtab[i];
 
@@ -207,33 +219,25 @@ void print_ent_nd_ext(char *ent_file_name)
     FILE *ext; /* for externals */
     char *ext_file_name;
     Symtab_slot *ptr;
-    int i;
-    int wrote_ent;
-    int wrote_ext;
-
-    wrote_ent = 0;
-    wrote_ext = 0;
+    int i = 0, wrote_ent = 0, wrote_ext = 0;
 
     ext_file_name = strdup(ent_file_name);
-    /* now cut the "ent" extension and replace with "object" extension */
+    /* cut the "ent" extension and replace with "object" extension */
     ext_file_name[strlen(ent_file_name) - strlen("ent")] = '\0';
     strcat(ext_file_name, "ext");
-    /* now creates files for entries and externals */
+    /* creates files for entries and externals */
     ent = fopen(ent_file_name, "w");
     ext = fopen(ext_file_name, "w");
 
-    for (i = 0; i< HASHSIZE; i++) {
-
+    for (; i< HASHSIZE; i++) {
         ptr = hashtab[i];
 
         while (ptr != NULL) {
-
             if (ptr->is_entry == 1) {/* true if symbol has an entry attribute */
                 fprintf(ent,"%s,%04d,%04d\n",
                 	ptr->name, ptr->base, ptr->offset);
                 wrote_ent = 1;
             }
-
             if (ptr->is_external == 1) {
                 fprintf(ext,"%s BASE %04d\n%s OFFSET %04d\n\n",
                     ptr->name, ptr->base, ptr->name, ptr->offset);
