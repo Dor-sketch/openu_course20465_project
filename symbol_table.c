@@ -32,6 +32,7 @@ void free_symbols(void)
             free(hashtab[i]->name);
             free(hashtab[i]);
             hashtab[i] = ptr;
+
         }
     }
 }
@@ -112,6 +113,9 @@ Symtab_slot *install(char *name, int value, char *artbt, src_op_line *srcline)
     if ((np = lookup(name)) == NULL) { /* not found */
         np = calloc(1, sizeof(Symtab_slot));
         if (np == NULL || (np->name = strdup(name)) == NULL) {
+            if (np != NULL) {
+                free(np);
+            }
             printf("%s:%d: error: failed duplicating symbol %s\n",
             	srcline->as_filename, srcline->line_num, name);
             srcline->error_flag = EXIT_FAILURE;
@@ -149,10 +153,8 @@ int get_base(int value)
     gets the instruction counter to update the values of ".data" symbols */
 void update_symbols(int icf)
 {
-    Symtab_slot *ptr;
     int i;
-
-    i = 0;
+    Symtab_slot *ptr = NULL;
 
     for (i = 0; i< HASHSIZE; i++) {
         ptr = hashtab[i];
@@ -172,8 +174,8 @@ void update_symbols(int icf)
 	(for debuuging - not used by the assembler) */
 void print_table(void)
 {
-    Symtab_slot *ptr;
     int i, j;
+    Symtab_slot *ptr = NULL;
     i = 0;
     j = 0;
 

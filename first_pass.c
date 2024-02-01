@@ -56,15 +56,19 @@ int convert_declaration(src_op_line *srcline, machine_word **code_img) {
 int get_first_img(int ic, int dc, machine_word **code_img,
                   machine_word **data_img, FILE *ex_src_fl, char *as_filename,
                   int *error_flag) {
-    src_op_line *srcline; /* the source line */
+    src_op_line *srcline = NULL; /* the source line */
     int pos = 0;          /* line's position indicator */
 
-    if ((srcline = new_linebuff(as_filename, ic, dc)) == NULL) {
-        printf("%s:1: error: memmory failure.\n", srcline->as_filename);
+    if (!(srcline = new_linebuff(as_filename, ic, dc))) {
+        printf("error: memmory failure.\n");
         *error_flag = EXIT_FAILURE; /* malloc failure */
+        return dc;
     }
     copy_alligned_line(srcline, ex_src_fl); /* read next line from source file */
-
+    if (srcline->alignedsrc[0] == '\0') {   /* true if empty line */
+        printf("error: copying from ex_src_fl.\n");
+        *error_flag = EXIT_FAILURE; /* malloc failure */
+    }
     while (srcline->alignedsrc[pos] != EOF) {
         identify_lables(srcline);
         pos = (strlen(srcline->label) > 0) ? strlen(srcline->label) + 2 : 0;

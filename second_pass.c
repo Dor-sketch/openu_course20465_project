@@ -91,9 +91,7 @@ void get_entry(char *maybe_entry, src_op_line *srcline)
 {
     int i;
     int j;
-    int inside_word;
-
-    j = 0;
+    int inside_word = 0;
 
     for (i = 0; i < strlen(".entry"); i++) { /* copy the first field */
         if (!isspace(srcline->alignedsrc[i])) {
@@ -122,9 +120,9 @@ int get_second_img(machine_word **code_img, machine_word **data_img,
 				   FILE *ex_src_fl, char *as_filename, int *error_flag)
 {
     src_op_line *srcline = srclinealoc();
-    char *data_type;
     /* a variable to return the value after freeing the structure */
     int non_pointer_return;
+    char *data_type = NULL;
 
     srcline->cur_ic = 100; /* get the source line structure ready */
     srcline->cur_dc = 0;

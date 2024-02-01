@@ -44,8 +44,8 @@ void print_hex_code(FILE *object, machine_word **code_img,
 void make_output(machine_word **code_img, machine_word **data_img, int ic,
 				 int dc, char *as_filename)
 {
-    FILE *object;
-    char *temp_name;
+    FILE *object = NULL;
+    char *temp_name = NULL;
 
     if ((temp_name = strdup(as_filename)) == NULL) {
         printf("error: name file\n");
@@ -62,6 +62,7 @@ void make_output(machine_word **code_img, machine_word **data_img, int ic,
 
     if ((temp_name = (char *) realloc(temp_name, strlen(temp_name)+4))
     	== NULL) {
+        free(temp_name);
         printf("error: out of memory\n");
         return;
     }

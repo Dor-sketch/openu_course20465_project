@@ -113,9 +113,6 @@ int data_img_malloc(machine_word **data_img, src_op_line *srcline) {
 void install_string(src_op_line *srcline, machine_word **data_img) {
     int ending, start;
 
-    ending = 0; /* a variable to represent the end of a string (closin "") */
-    start = 0;  /* same for the beginning of the string */
-
     if (!data_img_malloc(data_img, srcline)) {
         return;
     }
@@ -284,20 +281,19 @@ void install_numbers(src_op_line *srcline, machine_word **data_img) {
 /* install_extern: prints a warning if finds a label before an exteranl data
    saves the external sympol in the symbol table with external attributes. */
 void install_extern(src_op_line *srcline, machine_word **data_img) {
-    int i;
-
-    i = 0;
+    int extern_length = strlen(".extern ");
+    int i = extern_length;
 
     if (strlen(srcline->label) > 0) { /* a label before an external data */
         printf("%s:%d: warrning: label '%s' before an external declaration\n",
                srcline->as_filename, srcline->line_num, srcline->label);
     }
 
-    for (i = strlen(".extern "); srcline->alignedsrc[i] != '\0'; i++) {
+    for (; srcline->alignedsrc[i] != '\0'; i++) {
         /* copy the symbol after ".extern" */
-        srcline->label[i - strlen(".extern ")] = srcline->alignedsrc[i];
+        srcline->label[i - extern_length] = srcline->alignedsrc[i];
     }
-    srcline->label[i - strlen(".extern ") - 1] = '\0';
+    srcline->label[i - extern_length - 1] = '\0';
 
     if (install(srcline->label, 0, ".extern", srcline) == NULL) {
         printf("exit from external symbol statment\n");

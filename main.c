@@ -12,9 +12,10 @@ extern char *strdup(const char *);
 /* free_machine_img: frees the memory allocated for the machine image */
 void free_machine_img(machine_word **img, int start, int counter) {
     int i = start;
-
-    for (; i < counter && img[i] != NULL; i++) {
-        free(img[i]);
+    for (; i < counter; i++) {
+        if (img[i] != NULL) {
+            free(img[i]);
+        }
     }
 }
 
@@ -25,11 +26,11 @@ void free_resources(char *as_filename, int *error_flag, machine_word **code_img,
         free(as_filename);
     }
     if (code_img != NULL) {
-        free_machine_img(code_img, 100, ic);
+        free_machine_img(code_img, 100, ic+1);
     }
 
     if (data_img != NULL) {
-        free_machine_img(data_img, 0, dc);
+        free_machine_img(data_img, 0, dc+1);
     } else {
         printf("Error: Null pointer received.\n");
     }
@@ -73,8 +74,7 @@ void process_assembly_file(char *as_filename, int *ic, int *dc,
     am_file = fopen(am_filename, "r");
     free(am_filename);
     if (!am_file) {
-        printf("Error: Failed to open file %s.\n", am_filename);
-        free(am_filename);
+        printf("Error: Failed to open file: in am_filename\n");
         *error_flag = EXIT_FAILURE;
         return;
     }

@@ -298,7 +298,7 @@ void binary_word_print(machine_word *codeword)
 /* new_linebuff: gets a pointer that points to a new source line structure */
 src_op_line *new_linebuff(char *as_filename, int ic, int dc)
 {
-    src_op_line *srcline;
+    src_op_line *srcline = NULL;
     if ((srcline = srclinealoc()) == NULL) {
         printf("error: not enough memmory\n");
         return NULL;
@@ -309,6 +309,9 @@ src_op_line *new_linebuff(char *as_filename, int ic, int dc)
     srcline->line_num = 1;
     srcline->error_flag = 1;
     srcline->error_flag = EXIT_SUCCESS;
+    for (ic = 0; ic < MAXLINE; ic++) {
+        srcline->alignedsrc[ic] = '\0';
+    }
     srcline->l = 0;
     return srcline;
 }

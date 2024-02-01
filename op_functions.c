@@ -275,10 +275,9 @@ int get_words_num(machine_word **code_img, int address, char *first_op,
    speciel value if its undefined */
 int get_opcode(char source_word[MAXLINE]) {
     int i;
-
     i = 0;
 
-    for (i = 0; i < (sizeof(opcodes) / sizeof(opcodes[0])) &&
+    for (; i < (sizeof(opcodes) / sizeof(opcodes[0])) &&
                 (strcmp(source_word, opcodes[i].name) != 0);
          i++)
         ;

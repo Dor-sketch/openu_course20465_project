@@ -38,15 +38,14 @@ struct Macro_slot * macro_alloc(void)
 /* free_macros: a function to free the memmory allocated to macro declarations*/
 void free_macros(void)
 {
-    Macro_slot *ptr;
+    Macro_slot *ptr = NULL;
     int i;
 
     for (i = 0; i < HASHSIZE; i++) {
-        while (m_hashtab[i] != NULL) {
+        while (m_hashtab[i]) {
             ptr = m_hashtab[i]->next;
             free(m_hashtab[i]->lines);
             free(m_hashtab[i]->name);
-            free(m_hashtab[i]->next);
             free(m_hashtab[i]);
             m_hashtab[i] = ptr;
         }
@@ -60,6 +59,9 @@ unsigned macro_hash(char *s)
 {
     unsigned hashval;
 
+    if (s == NULL) {
+        return 0;
+    }
     for (hashval = 0; *s != '\0'; s++)
         hashval = *s + 31 * hashval;
     return hashval % HASHSIZE;
@@ -69,7 +71,7 @@ unsigned macro_hash(char *s)
 /* mlookup: m stands for "macro". look for s in macros macro_hash tabel */
 Macro_slot *mlookup(char *s)
 {
-    Macro_slot *np;
+    Macro_slot *np = NULL;
 
     for (np = m_hashtab[macro_hash(s)]; np!= NULL; np = np->next) {
         if (strcmp(s, np->name) == 0)
@@ -82,8 +84,8 @@ Macro_slot *mlookup(char *s)
 /* install_macro: save macro's name and content (lines) in macros' hashtable */
 Macro_slot *install_macro(char *name, char *lines)
 {
-    unsigned hashval = 0;
     Macro_slot *np = NULL;
+    unsigned hashval = 0;
 
     if((np = mlookup(name)) == NULL) { /* not found */
         np = macro_alloc();
@@ -104,7 +106,7 @@ Macro_slot *install_macro(char *name, char *lines)
 char *copy_macro_lines(FILE *read)
 {
     char line[MAXLINE] = {0};  /* initialize to all zeros*/
-    char *all_line;
+    char *all_line = NULL;
     int i;
     char c = ' ';
 
@@ -170,7 +172,7 @@ void copy_two_fields(char *first_field, char *second_field, char *curline)
 /* open_file: check if file exists and open it */
 FILE *open_file(char *file_name)
 {
-    FILE *fp;
+    FILE *fp = NULL;
 
     if ((fp = fopen(file_name, "r")) == NULL) {
         printf("error: unable to find file '%s'\n", file_name);
@@ -188,17 +190,12 @@ FILE *open_file(char *file_name)
 	instead of their names into the new file. */
 char * expand_macros(char *file_name)
 {
-    FILE *write;
-    FILE *read;
-    char c = ' ';
+    FILE *write = NULL, *read = NULL;
+    Macro_slot *saved_macro = NULL;
+    char *first_field = NULL, *second_field = NULL, *new_file_name = NULL;
     char curline[MAXLINE] = {0}; /* I assumed the max macro size*/
-    int i;
-    char *first_field;
-    char *second_field;
-    char *new_file_name;
-    int empty_line;
-
-    Macro_slot *saved_macro;
+    char c = ' ';
+    int i, empty_line = 1;
 
     if ((new_file_name = strdup(file_name)) == NULL) {
         printf("error: file name\n");
